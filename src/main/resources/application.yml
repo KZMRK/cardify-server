@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: cardify
+  datasource:
+    url: ${CARDIFY_DB_URL}
+    name: ${CARDIFY_DB_NAME}
+    username: ${CARDIFY_DB_USERNAME}
+    password: ${CARDIFY_DB_PASSWORD}
+  jpa:
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+logging:
+  level:
+    com.cardify.config.api: DEBUG
+
+cors:
+  allowed:
+    path-mapping: '/**'
+    origins: '*'
+    headers: '*'
+    methods: '*'
+    max-age: 3600
+
+security:
+  jwt:
+    accessJwtExpTime: 2000000
+    refreshJwtExpTime: 64800
+    issuer: http://localhost:8080
+    signingKey: rOqqGY9W+lg9srI+uCJgUGYbmUCB5IyUZLfcSGi9PPsZ5NMopShGEMA7eSkBhw0jQbBNwi8ZsdfLhid10pIvLw==
+
+openAI:
+  apiKey: ${OPEN_AI_API_KEY:x}
+
+youtube:
+  domain:
+    https://www.youtube.com
+
+cloudinary:
+  cloudName: ${CLOUDINARY_CLOUD_NAME}
+  apiKey: ${CLOUDINARY_API_KEY}
+  apiSecret: ${CLOUDINARY_API_SECRET}
+  imagesPath: images/
+
+google:
+  documentAi:
+    projectId: ${GOOGLE_DOCUMENT_AI_PROJECT_ID}
+    location: eu
+    processorId: ${GOOGLE_DOCUMENT_AI_PROCESSOR_ID}

@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  server:
+    container_name: cardify-server
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      LOANBUD_DB_URL: jdbc:postgresql://localhost:5432/cardify_db
+      LOANBUD_DB_NAME: cardify_db
+      LOANBUD_DB_USER: postgres
+      LOANBUD_DB_PASSWORD: password
+
+  db:
+    container_name: cardify-db
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: loanbud_db
+      POSTGRES_USER: loanbud_user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
