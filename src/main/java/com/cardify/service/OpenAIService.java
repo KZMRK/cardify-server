@@ -43,13 +43,16 @@ public class OpenAIService implements LargeLanguageModelProvider {
 
     @SneakyThrows
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public List<FlashcardDto> generateFlashcards(FlashcardGenerationType generationType, BaseFlashcardGenerationRequest request, String transcript) {
-        InputStream inputStream = new ByteArrayInputStream(transcript.getBytes(StandardCharsets.UTF_8));
+    public List<FlashcardDto> generateFlashcards(FlashcardGenerationType generationType,
+                                                 BaseFlashcardGenerationRequest request,
+                                                 String text) {
+        log.info("generateFlashcards] invoked with generationType=[{}], request=[{}], text=[{}]", generationType, request, text);
+        InputStream inputStream = new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
         String fileId = uploadFile(inputStream).id();
         var attachment = buildAttachment(fileId);
-        List<String> keywords = extractKeywords(FlashcardGenerationType.YOUTUBE, request, attachment);
+        List<String> keywords = extractKeywords(generationType, request, attachment);
         log.info("[generateFlashcards] keywords=[{}]", keywords);
-        String prompt = generationType.formatCardsPrompt(request.getSourceLanguageType().getName(), keywords);
+        String prompt = generationType.formatCardsPrompt(request.getTargetLanguageType().getName(), keywords);
         var message = buildMessage(prompt, attachment);
         Run run = createThreadAndRun(OpenAIAssistantType.FLASHCARD_GENERATOR, message);
         waitRunEnd(run);

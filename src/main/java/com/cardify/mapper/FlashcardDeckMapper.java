@@ -29,6 +29,7 @@ public class FlashcardDeckMapper {
 
     public FlashcardDeckMinResponse toMinDto(FlashcardDeck entity) {
         int learnedFlashcardsCount = (int) entity.getFlashcards().stream()
+                .filter(flashcard -> flashcard.getIsLearned() != null)
                 .filter(Flashcard::getIsLearned)
                 .count();
         return new FlashcardDeckMinResponse()

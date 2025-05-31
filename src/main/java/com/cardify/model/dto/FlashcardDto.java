@@ -23,4 +23,6 @@ public class FlashcardDto {
     private CloudFileDto backImage;
 
     private String backContext;
+
+    private Boolean isLearned;
 }

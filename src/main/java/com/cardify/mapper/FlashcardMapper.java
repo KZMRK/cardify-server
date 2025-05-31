@@ -29,6 +29,7 @@ public class FlashcardMapper {
                 .setFrontImage(cloudFileMapper.toDto(entity.getFrontImage()))
                 .setBackTerm(entity.getBackTerm())
                 .setBackImage(cloudFileMapper.toDto(entity.getBackImage()))
-                .setBackContext(entity.getBackContext());
+                .setBackContext(entity.getBackContext())
+                .setIsLearned(entity.getIsLearned());
     }
 }

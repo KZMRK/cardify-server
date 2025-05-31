@@ -2,13 +2,6 @@ package com.cardify.model.type;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.apache.commons.lang3.ObjectUtils;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Getter
 @AllArgsConstructor
@@ -40,7 +33,6 @@ public enum LanguageType {
     POLISH("pl", "Polish", "Podaj mi jeden przykład użycia wyrażenia '%s'"),
     PORTUGUESE("pt", "Portuguese", "Dê-me um exemplo de uso da frase '%s'"),
     ROMANIAN("ro", "Romanian", "Dați-mi un exemplu de utilizare a expresiei '%s'"),
-    RUSSIAN("ru", "Russian", "Приведите один пример использования фразы '%s'"),
     SERBIAN("sr", "Serbian", "Дајте ми један пример коришћења израза '%s'"),
     SLOVAK("sk", "Slovak", "Uveďte jeden príklad použitia frázy '%s'"),
     SLOVENIAN("sl", "Slovenian", "Daj mi en primer uporabe izraza '%s'"),

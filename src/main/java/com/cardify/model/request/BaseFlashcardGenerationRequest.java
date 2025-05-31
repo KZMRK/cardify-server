@@ -10,5 +10,5 @@ public abstract class BaseFlashcardGenerationRequest {
 
     private Integer flashcardsCount;
 
-    private LanguageType sourceLanguageType;
+    private LanguageType targetLanguageType;
 }

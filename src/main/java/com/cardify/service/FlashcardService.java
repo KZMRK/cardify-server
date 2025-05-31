@@ -5,6 +5,7 @@ import com.cardify.model.dto.FlashcardDto;
 import com.cardify.model.entity.CloudFile;
 import com.cardify.model.entity.Flashcard;
 import com.cardify.model.entity.FlashcardDeck;
+import com.cardify.model.request.BookFlashcardGenerationRequest;
 import com.cardify.model.request.YouTubeFlashcardGenerationRequest;
 import com.cardify.model.response.CloudFileDto;
 import com.cardify.model.response.YouTubeTranscriptResponse;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +36,7 @@ public class FlashcardService {
     private final LargeLanguageModelProvider llmProvider;
     private final YouTubeService youTubeService;
     private final OpticalCharacterRecognitionProvider ocrProvider;
+    private final PdfDocumentTextExtractorService textExtracrotService;
 
     @Transactional
     public FlashcardDto createFlashcard(String flashcardDeckId, FlashcardDto flashcardRequest) {
@@ -58,15 +61,28 @@ public class FlashcardService {
                 .forEach(flashcardDeck::addFlashcard);
     }
 
+    public void generateFlashcards(String flashcardDeckId, BookFlashcardGenerationRequest request, MultipartFile file) {
+        log.info("[generateFlashcards] invoked with flashcardDeckId=[{}], request=[{}], fileName=[{}]", flashcardDeckId, request, file.getOriginalFilename());
+        FlashcardDeck flashcardDeck = flashcardDeckRepository.findOneById(flashcardDeckId);
+        String bookText = textExtracrotService.extract(file, request.getStartPage(), request.getEndPage());
+        List<FlashcardDto> flashcards = llmProvider.generateFlashcards(FlashcardGenerationType.BOOK, request, bookText);
+        flashcards.stream()
+                .map(f -> flashcardMapper.toEntity(f, null, null))
+                .forEach(flashcardDeck::addFlashcard);
+    }
+
+    @Transactional
+    public void patchFlashcardIsLearned(String flashcardId, Boolean isLearned) {
+        log.info("[patchFlashcardIsLearned] invoked with flashcardId=[{}], isLearned=[{}]", flashcardId, isLearned);
+        Flashcard flashcard = flashcardRepository.findOneById(flashcardId);
+        flashcard.setIsLearned(isLearned);
+    }
+
     @Transactional
     public FlashcardDto updateFlashcardById(String flashcardId, FlashcardDto dto) {
         return null;
     }
 
-    @Transactional
-    public void updateFlashcardLearnedStatus(String flashcardId) {
-
-    }
 
     @Transactional
     public void deleteFlashcardById(String flashcardId) {
