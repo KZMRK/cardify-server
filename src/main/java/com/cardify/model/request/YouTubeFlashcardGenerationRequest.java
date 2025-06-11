@@ -6,7 +6,7 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@ToString
+@ToString(callSuper = true)
 public class YouTubeFlashcardGenerationRequest extends BaseFlashcardGenerationRequest {
 
     private String videoId;

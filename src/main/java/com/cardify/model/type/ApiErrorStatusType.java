@@ -7,5 +7,8 @@ public enum ApiErrorStatusType {
     NOT_FOUND,
     UNAUTHORIZED,
     ACCESS_DENIED,
-    SERVER_ERROR
+    SERVER_ERROR,
+    SUBTITLES_REQUIRED,
+    EMPTY_DOCUMENT,
+    EMPTY_IMAGE
 }

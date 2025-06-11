@@ -1,9 +1,10 @@
 package com.cardify.service;
 
+import com.cardify.model.exception.BadRequestException;
 import com.cardify.model.property.GoogleDocumentAIProperties;
+import com.cardify.model.type.ApiErrorStatusType;
 import com.google.cloud.documentai.v1.Document;
 import com.google.cloud.documentai.v1.DocumentProcessorServiceClient;
-import com.google.cloud.documentai.v1.DocumentProcessorServiceSettings;
 import com.google.cloud.documentai.v1.ProcessRequest;
 import com.google.cloud.documentai.v1.ProcessResponse;
 import com.google.cloud.documentai.v1.RawDocument;
@@ -12,9 +13,12 @@ import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -31,7 +35,9 @@ public class GoogleDocumentAIService implements OpticalCharacterRecognitionProvi
         ProcessRequest request = buildProcessRequest(file);
         ProcessResponse result = client.processDocument(request);
         Document documentResponse = result.getDocument();
-        return documentResponse.getText();
+        return Optional.of(documentResponse.getText())
+                .filter(StringUtils::isNoneBlank)
+                .orElseThrow(() -> new BadRequestException(ApiErrorStatusType.EMPTY_IMAGE, "Зображення не містить тексту"));
     }
 
     private ProcessRequest buildProcessRequest(MultipartFile file) {

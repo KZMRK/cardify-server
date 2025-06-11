@@ -19,6 +19,7 @@ public class FlashcardMapper {
         flashcard.setBackTerm(dto.getBackTerm());
         flashcard.setBackImage(backImage);
         flashcard.setBackContext(dto.getBackContext());
+        flashcard.setFrontContext(dto.getFrontContext());
         return flashcard;
     }
 
@@ -30,6 +31,7 @@ public class FlashcardMapper {
                 .setBackTerm(entity.getBackTerm())
                 .setBackImage(cloudFileMapper.toDto(entity.getBackImage()))
                 .setBackContext(entity.getBackContext())
+                .setFrontContext(entity.getFrontContext())
                 .setIsLearned(entity.getIsLearned());
     }
 }

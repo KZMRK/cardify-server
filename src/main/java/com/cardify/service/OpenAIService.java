@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openai.client.OpenAIClient;
 import com.openai.core.MultipartField;
 import com.openai.models.ResponseFormatJsonSchema;
+import com.openai.models.beta.assistants.CodeInterpreterTool;
 import com.openai.models.beta.threads.ThreadCreateAndRunParams;
 import com.openai.models.beta.threads.ThreadCreateAndRunParams.Thread.Message.Attachment;
 import com.openai.models.beta.threads.messages.Message;
@@ -24,14 +25,16 @@ import com.openai.models.files.FilePurpose;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.function.Consumer;
+
+import static com.openai.models.files.FileCreateParams.builder;
 
 @Slf4j
 @Service
@@ -41,24 +44,26 @@ public class OpenAIService implements LargeLanguageModelProvider {
     private final OpenAIClient openAIClient;
     private final ObjectMapper objectMapper;
 
+    @Async
     @SneakyThrows
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public List<FlashcardDto> generateFlashcards(FlashcardGenerationType generationType,
-                                                 BaseFlashcardGenerationRequest request,
-                                                 String text) {
-        log.info("generateFlashcards] invoked with generationType=[{}], request=[{}], text=[{}]", generationType, request, text);
+    public void generateFlashcards(FlashcardGenerationType generationType,
+                                   BaseFlashcardGenerationRequest request,
+                                   String text,
+                                   Consumer<List<FlashcardDto>> callback) {
+        log.info("[generateFlashcards] invoked with generationType=[{}], request=[{}], text=[{}]", generationType, request, text);
         InputStream inputStream = new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8));
         String fileId = uploadFile(inputStream).id();
         var attachment = buildAttachment(fileId);
         List<String> keywords = extractKeywords(generationType, request, attachment);
         log.info("[generateFlashcards] keywords=[{}]", keywords);
-        String prompt = generationType.formatCardsPrompt(request.getTargetLanguageType().getName(), keywords);
+        String prompt = generationType.formatCardsPrompt(request.getSourceLanguageType().getName(), keywords);
         var message = buildMessage(prompt, attachment);
         Run run = createThreadAndRun(OpenAIAssistantType.FLASHCARD_GENERATOR, message);
         waitRunEnd(run);
         var messages = getThreadMessages(run.threadId());
         String responseMessage = getAssistantAnswer(messages);
-        return objectMapper.readValue(responseMessage, OpenAIFlashcardResponse.class).getFlashcards();
+        List<FlashcardDto> flashcards = objectMapper.readValue(responseMessage, OpenAIFlashcardResponse.class).getFlashcards();
+        callback.accept(flashcards);
     }
 
     @SneakyThrows
@@ -72,14 +77,12 @@ public class OpenAIService implements LargeLanguageModelProvider {
     }
 
     private void waitRunEnd(Run run) {
-        log.info("[waitRunEnd] runId=[{}]", run.id());
-        log.info("[waitRunEnd] threadId=[{}]", run.threadId());
+        log.info("[waitRunEnd] threadId=[{}], runId=[{}]", run.threadId(), run.id());
         com.openai.models.beta.threads.runs.RunStatus runStatus = run.status();
         while (runStatus.equals(RunStatus.QUEUED) || runStatus.equals(RunStatus.IN_PROGRESS)) {
             runStatus = getRunStatusById(run.threadId(), run.id());
         }
         if (!runStatus.equals(RunStatus.COMPLETED)) {
-            log.warn("[generateFlashcards] runStatus=[{}]", runStatus);
             throw new CardifyException("Generation Failed");
         }
     }
@@ -124,7 +127,7 @@ public class OpenAIService implements LargeLanguageModelProvider {
                 .contentType("text/plain")
                 .filename("transcript.txt")
                 .build();
-        var createParams = com.openai.models.files.FileCreateParams.builder()
+        var createParams = builder()
                 .file(fileField)
                 .purpose(FilePurpose.ASSISTANTS)
                 .build();
@@ -140,7 +143,10 @@ public class OpenAIService implements LargeLanguageModelProvider {
     private Attachment buildAttachment(String fileId) {
         return Attachment.builder()
                 .fileId(fileId)
-                .addTool(Attachment.Tool.ofFileSearch())
+                .tools(List.of(
+                        Attachment.Tool.ofFileSearch(),
+                        Attachment.Tool.ofCodeInterpreter(CodeInterpreterTool.builder().build()))
+                )
                 .build();
     }
 

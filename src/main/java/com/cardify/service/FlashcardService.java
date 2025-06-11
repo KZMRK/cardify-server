@@ -5,6 +5,8 @@ import com.cardify.model.dto.FlashcardDto;
 import com.cardify.model.entity.CloudFile;
 import com.cardify.model.entity.Flashcard;
 import com.cardify.model.entity.FlashcardDeck;
+import com.cardify.model.exception.NotFoundException;
+import com.cardify.model.request.BaseFlashcardGenerationRequest;
 import com.cardify.model.request.BookFlashcardGenerationRequest;
 import com.cardify.model.request.YouTubeFlashcardGenerationRequest;
 import com.cardify.model.response.CloudFileDto;
@@ -36,7 +38,7 @@ public class FlashcardService {
     private final LargeLanguageModelProvider llmProvider;
     private final YouTubeService youTubeService;
     private final OpticalCharacterRecognitionProvider ocrProvider;
-    private final PdfDocumentTextExtractorService textExtracrotService;
+    private final PdfDocumentTextExtractorService textExtractorService;
 
     @Transactional
     public FlashcardDto createFlashcard(String flashcardDeckId, FlashcardDto flashcardRequest) {
@@ -50,25 +52,25 @@ public class FlashcardService {
         return flashcardMapper.toDto(flashcard);
     }
 
-    @Transactional
     public void generateFlashcards(String flashcardDeckId, YouTubeFlashcardGenerationRequest request) {
         log.info("[generateFlashcards] invoked with flashcardDeckId=[{}], request=[{}]", flashcardDeckId, request);
-        FlashcardDeck flashcardDeck = flashcardDeckRepository.findOneById(flashcardDeckId);
         String transcript = getVideoTranscript(request.getVideoId(), request.getStartTime(), request.getEndTime());
-        List<FlashcardDto> flashcards = llmProvider.generateFlashcards(FlashcardGenerationType.YOUTUBE, request, transcript);
-        flashcards.stream()
-                .map(f -> flashcardMapper.toEntity(f, null, null))
-                .forEach(flashcardDeck::addFlashcard);
+        llmProvider.generateFlashcards(FlashcardGenerationType.YOUTUBE, request, transcript, dtos -> saveGeneratedFlashcards(flashcardDeckId, dtos));
     }
+
 
     public void generateFlashcards(String flashcardDeckId, BookFlashcardGenerationRequest request, MultipartFile file) {
         log.info("[generateFlashcards] invoked with flashcardDeckId=[{}], request=[{}], fileName=[{}]", flashcardDeckId, request, file.getOriginalFilename());
-        FlashcardDeck flashcardDeck = flashcardDeckRepository.findOneById(flashcardDeckId);
-        String bookText = textExtracrotService.extract(file, request.getStartPage(), request.getEndPage());
-        List<FlashcardDto> flashcards = llmProvider.generateFlashcards(FlashcardGenerationType.BOOK, request, bookText);
-        flashcards.stream()
-                .map(f -> flashcardMapper.toEntity(f, null, null))
-                .forEach(flashcardDeck::addFlashcard);
+        String bookText = textExtractorService.extract(file, request.getStartPage(), request.getEndPage());
+        llmProvider.generateFlashcards(FlashcardGenerationType.BOOK, request, bookText, dtos -> saveGeneratedFlashcards(flashcardDeckId, dtos));
+    }
+
+    public void generateFlashcards(String flashcardDeckId, BaseFlashcardGenerationRequest request, List<MultipartFile> files) {
+        log.info("[generateFlashcards] invoked with flashcardDeckId=[{}], request=[{}]", flashcardDeckId, request);
+        String imagesText = files.stream()
+                .map(ocrProvider::extractText)
+                .collect(Collectors.joining("\n"));
+        llmProvider.generateFlashcards(FlashcardGenerationType.IMAGE, request, imagesText, dtos -> saveGeneratedFlashcards(flashcardDeckId, dtos));
     }
 
     @Transactional
@@ -102,6 +104,16 @@ public class FlashcardService {
                 .filter(t -> t.getStart() >= startTime && t.getStart() <= endTime)
                 .map(YouTubeTranscriptResponse.Text::getText)
                 .collect(Collectors.joining());
+    }
+
+    private void saveGeneratedFlashcards(String flashcardDeckId, List<FlashcardDto> dtos) {
+        log.info("[saveGeneratedFlashcards] invoked with flashcardDeckId=[{}], dtos=[{}]", flashcardDeckId, dtos);
+        FlashcardDeck flashcardDeck = flashcardDeckRepository.findById(flashcardDeckId)
+                .orElseThrow(() -> new NotFoundException("resource not found"));
+        dtos.stream()
+                    .map(f -> flashcardMapper.toEntity(f, null, null))
+                    .forEach(flashcardDeck::addFlashcard);
+        flashcardDeckRepository.save(flashcardDeck);
     }
 }
 

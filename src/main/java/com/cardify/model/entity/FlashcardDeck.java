@@ -3,6 +3,7 @@ package com.cardify.model.entity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
@@ -33,7 +34,7 @@ public class FlashcardDeck extends BaseEntity {
 
     @Setter(AccessLevel.PRIVATE)
     @OrderBy("createdAt desc")
-    @OneToMany(mappedBy = "flashcardDeck", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "flashcardDeck", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Flashcard> flashcards = new ArrayList<>();
 
     public void addFlashcard(Flashcard flashcard) {

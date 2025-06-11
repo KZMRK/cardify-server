@@ -2,8 +2,10 @@ package com.cardify.model.type;
 
 import com.openai.core.JsonArray;
 import com.openai.core.JsonBoolean;
+import com.openai.core.JsonNumber;
 import com.openai.core.JsonObject;
 import com.openai.core.JsonString;
+import com.openai.core.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -45,13 +47,15 @@ public enum OpenAIAssistantType {
                                                                                     "frontContext", JsonObject.of(
                                                                                             Map.of(
                                                                                                     "type", JsonString.of("string"),
-                                                                                                    "description", JsonString.of("An optional sentence or phrase providing context for the front term.")
+                                                                                                    "description", JsonString.of("Usage context of the frontTerm extracted from the file. Should be in the same language as the frontTerm."),
+                                                                                                    "maxLength", JsonNumber.of(255)
                                                                                             )
                                                                                     ),
                                                                                     "backContext", JsonObject.of(
                                                                                             Map.of(
                                                                                                     "type", JsonString.of("string"),
-                                                                                                    "description", JsonString.of("An optional sentence or phrase providing context or usage for the back definition.")
+                                                                                                    "description", JsonString.of("Translation of the frontContext. Should be in the same language as the backTerm."),
+                                                                                                    "maxLength", JsonNumber.of(255)
                                                                                             )
                                                                                     )
                                                                             )
@@ -77,7 +81,7 @@ public enum OpenAIAssistantType {
     ),
     KEYWORD_EXTRACTOR("asst_tkev34g9kD9g8RLpHUYUDgsH", "keyword_extractor",
             Schema.builder()
-                    .putAdditionalProperty("type", JsonString.from("object"))
+                    .putAdditionalProperty("type", JsonString.of("object"))
                     .putAdditionalProperty("properties", JsonObject.of(
                             Map.of("keywords", JsonObject.of(
                                     Map.of("type", JsonString.of("array"),

@@ -33,7 +33,7 @@ public class CardifyExceptionHandler {
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ApiErrorResponse> handleException(BadRequestException e) {
-        return ResponseEntity.badRequest().body(build(ApiErrorStatusType.BAD_REQUEST, e));
+        return ResponseEntity.badRequest().body(build(e.getApiErrorStatusType(), e));
     }
 
     @ExceptionHandler(NotFoundException.class)

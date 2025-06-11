@@ -2,6 +2,7 @@ package com.cardify.controller;
 
 import com.cardify.model.dto.FlashcardDeckMinResponse;
 import com.cardify.model.dto.FlashcardDto;
+import com.cardify.model.request.BaseFlashcardGenerationRequest;
 import com.cardify.model.request.BookFlashcardGenerationRequest;
 import com.cardify.model.request.FlashcardDeckRequest;
 import com.cardify.model.request.FlashcardDeckResponse;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -54,6 +57,13 @@ public class FlashcardDeckController {
                                    @RequestPart BookFlashcardGenerationRequest request,
                                    @RequestPart MultipartFile file) {
         flashcardService.generateFlashcards(flashcardDeckId, request, file);
+    }
+
+    @PostMapping(value = "/{flashcardDeckId}/flashcards/generate-ai-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void generateFlashcards(@PathVariable String flashcardDeckId,
+                                   @RequestPart BaseFlashcardGenerationRequest request,
+                                   @RequestPart List<MultipartFile> files) {
+        flashcardService.generateFlashcards(flashcardDeckId, request, files);
     }
 
     @GetMapping(produces = APPLICATION_JSON_VALUE)

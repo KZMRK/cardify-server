@@ -28,6 +28,9 @@ public class Flashcard extends BaseEntity {
     @Column(name = "back_context")
     private String backContext;
 
+    @Column(name = "front_context")
+    private String frontContext;
+
     @OneToOne
     @JoinColumn(name = "back_image_id")
     private CloudFile backImage;

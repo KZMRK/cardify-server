@@ -24,5 +24,7 @@ public class FlashcardDto {
 
     private String backContext;
 
+    private String frontContext;
+
     private Boolean isLearned;
 }

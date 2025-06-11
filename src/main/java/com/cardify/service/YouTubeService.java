@@ -1,8 +1,10 @@
 package com.cardify.service;
 
 import com.cardify.config.api.YouTubeApi;
+import com.cardify.model.exception.BadRequestException;
 import com.cardify.model.exception.CardifyException;
 import com.cardify.model.response.YouTubeTranscriptResponse;
+import com.cardify.model.type.ApiErrorStatusType;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +34,7 @@ public class YouTubeService {
             return youTubeApi.getTranscript(URI.create(captionUrl));
         } else {
             log.info("Without subtitles");
-            throw new CardifyException("Video without subtitles");
+            throw new BadRequestException(ApiErrorStatusType.SUBTITLES_REQUIRED, "Відео без субтитрів");
         }
     }
 }

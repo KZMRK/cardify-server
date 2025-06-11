@@ -11,9 +11,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface FlashcardDeckRepository extends BaseRepository<FlashcardDeck> {
+
+    Optional<FlashcardDeck> findById(String id);
 
     default Page<FlashcardDeck> findAllOrderedBySearch(String search, Pageable pageable) {
         Specification<FlashcardDeck> specification = (root, query, cb) -> {
